@@ -31,6 +31,8 @@
   --palworld-accent-contrast: #fff8e5;
   --palworld-tab-selected-bg: #bfe6dc;
   --palworld-tab-selected-hover-bg: #b1ddd2;
+  --palworld-query-tab-hover-bg: rgba(26, 163, 155, 0.12);
+  --palworld-query-tab-hover-border: #1aa39b;
   --palworld-query-tab-selected-bg: linear-gradient(
     180deg,
     #ebfaf5 0%,
@@ -105,7 +107,7 @@
   --palworld-loading-accent: #ffd66b;
   --palworld-result-success-border: rgba(125, 223, 201, 0.58);
   --palworld-result-success-bg: rgba(216, 247, 233, 0.94);
-  --palworld-result-search-border: rgba(255, 248, 229, 0.42);
+  --palworld-result-search-border: var(--palworld-border-strong);
   font-family:
     Inter,
     ui-sans-serif,
@@ -314,45 +316,22 @@ textarea {
   }
 }
 
-@media (max-width: 61.999rem) {
-  .palworld-floating-header:has(.palworld-results-search-dock)
-    .palworld-back-to-top {
-    bottom: calc(max(12px, env(safe-area-inset-bottom)) + 52px);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .palworld-back-to-top {
     transition: none;
   }
 }
 
-.palworld-results-search-dock {
-  position: fixed;
-  z-index: 1001;
-  right: 12px;
-  bottom: max(12px, env(safe-area-inset-bottom));
-  left: 12px;
+.palworld-results-search-toolbar {
+  position: sticky;
+  z-index: 2;
+  top: calc(max(12px, env(safe-area-inset-top)) + 52px);
+  width: min(32rem, 100%);
   min-width: 0;
-  pointer-events: auto;
 }
 
-@media (max-width: 61.999rem) {
-  #palworld-parent-results,
-  #palworld-target-results {
-    padding-bottom: 4.5rem;
-  }
-}
-
-@media (min-width: 62rem) {
-  .palworld-results-search-dock {
-    position: relative;
-    z-index: auto;
-    inset: auto;
-    width: min(32rem, calc(100vw - 34rem));
-    min-width: 16rem;
-    flex: 0 1 32rem;
-  }
+.palworld-results-search-toolbar input::-webkit-search-cancel-button {
+  display: none;
 }
 
 .palworld-shell-fallback {
@@ -712,13 +691,6 @@ textarea {
   align-items: start;
 }
 
-.palworld-parent-formula-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
 .palworld-parent-inventory-legend {
   display: inline-flex;
   align-items: center;
@@ -954,10 +926,5 @@ textarea {
 @media (max-width: 47.99rem) {
   .palworld-passive-picker-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .palworld-parent-formula-toolbar {
-    align-items: flex-start;
-    flex-direction: column;
   }
 }

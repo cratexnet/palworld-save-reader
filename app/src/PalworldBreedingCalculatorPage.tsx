@@ -69,7 +69,12 @@ import {
 } from "@chakra-ui/react";
 import BackToTopButton from "./BackToTopButton";
 import FileDropzone from "./FileDropzone";
-import ResultsSearchDock from "./ResultsSearchDock";
+import ResultsSearchToolbar from "./ResultsSearchToolbar";
+import {
+  matchesResultsSearch,
+  normalizeResultsSearchText,
+  type ResultsSearchEntry,
+} from "./results-search";
 import { resolveBreedingSearchResultVisibility } from "./breeding-search-result-visibility";
 import type { Locale } from "./i18n";
 import {
@@ -558,14 +563,6 @@ function sortParentBreedingOutcomes(
       left.partnerRequiredGender.localeCompare(right.partnerRequiredGender)
     );
   });
-}
-
-function routeDisplayKey(route: PalworldBreedingRoute) {
-  return route.steps
-    .map(
-      (step) => `${step.parent1.species}+${step.parent2.species}=${step.child}`,
-    )
-    .join("|");
 }
 
 function waitForNextPaint() {
@@ -2994,18 +2991,14 @@ function RouteCollection({
     useState<InventoryRouteGroupKey>(
       recommendedInventoryGroup ?? "parents_owned",
     );
-  const normalizedQuery = normalizeSearchText(query);
-  const inventoryGroupKeys = ["parents_owned", "needs_supplement"] as const;
-  const selectableRoutes = routes.filter(
-    (route) =>
-      route.group === "parents_owned" || route.group === "needs_supplement",
+  const normalizedQuery = normalizeResultsSearchText(query);
+  const matchingRoutes = filterBreedingRoutesBySearch(
+    routes,
+    mode,
+    query,
+    locale,
   );
-  const searchableRoutes = mode === "formula" ? routes : selectableRoutes;
-  const matchingRoutes = normalizedQuery
-    ? searchableRoutes.filter((route) =>
-        routeSearchText(route, locale).includes(normalizedQuery),
-      )
-    : searchableRoutes;
+  const inventoryGroupKeys = ["parents_owned", "needs_supplement"] as const;
 
   if (mode === "formula") {
     if (matchingRoutes.length === 0) {
@@ -3533,46 +3526,73 @@ function SearchTruncationNotice({
   );
 }
 
-function routeSearchText(route: PalworldBreedingRoute, locale: string) {
-  return normalizeSearchText(
-    [
-      routeDisplayKey(route),
-      ...route.steps.flatMap((step) => [
-        step.parent1.species,
-        step.parent2.species,
-        step.child,
-        safePalLabel(step.parent1.species, locale),
-        safePalLabel(step.parent2.species, locale),
-        safePalLabel(step.child, locale),
-      ]),
-      ...route.passiveCoverage.map((id) => safePassiveLabel(id, locale)),
-      ...route.requirements.flatMap((requirement) => {
-        if (requirement.type === "missing_parent") {
-          return [
-            requirement.species,
-            safePalLabel(requirement.species, locale),
-          ];
-        }
-        if (requirement.type === "missing_passive") {
-          return [
-            requirement.passiveId,
-            safePassiveLabel(requirement.passiveId, locale),
-          ];
-        }
-        if (requirement.target.type === "parent") {
-          return [
-            requirement.itemId,
-            requirement.target.species,
-            safePalLabel(requirement.target.species, locale),
-          ];
-        }
-        return [
-          requirement.itemId,
-          requirement.target.passiveId,
-          safePassiveLabel(requirement.target.passiveId, locale),
-        ];
-      }),
-    ].join(" "),
+function createRouteSearchEntry(
+  route: PalworldBreedingRoute,
+  locale: string,
+): ResultsSearchEntry {
+  const species = [
+    ...route.steps.flatMap((step) => [
+      step.parent1.species,
+      step.parent2.species,
+    ]),
+    ...route.requirements.flatMap((requirement) => {
+      if (requirement.type === "missing_parent") {
+        return [requirement.species];
+      }
+      if (
+        requirement.type !== "missing_passive" &&
+        requirement.target.type === "parent"
+      ) {
+        return [requirement.target.species];
+      }
+      return [];
+    }),
+  ];
+  const passiveIds = [
+    ...route.passiveCoverage,
+    ...route.requirements.flatMap((requirement) => {
+      if (requirement.type === "missing_passive") {
+        return [requirement.passiveId];
+      }
+      if (
+        requirement.type !== "missing_parent" &&
+        requirement.target.type === "passive"
+      ) {
+        return [requirement.target.passiveId];
+      }
+      return [];
+    }),
+  ];
+
+  return {
+    text: [
+      ...species.map((internalId) => safePalLabel(internalId, locale)),
+      ...passiveIds.map((passiveId) => safePassiveLabel(passiveId, locale)),
+    ],
+    paldeckCodes: species.map(
+      (internalId) => gameData.palsByInternal[internalId]?.paldeckCode,
+    ),
+  };
+}
+
+function filterBreedingRoutesBySearch(
+  routes: readonly PalworldBreedingRoute[],
+  mode: CalculationMode,
+  query: string,
+  locale: string,
+) {
+  const searchableRoutes =
+    mode === "formula"
+      ? routes
+      : routes.filter(
+          (route) =>
+            route.group === "parents_owned" ||
+            route.group === "needs_supplement",
+        );
+  if (!normalizeResultsSearchText(query)) return searchableRoutes;
+
+  return searchableRoutes.filter((route) =>
+    matchesResultsSearch(createRouteSearchEntry(route, locale), query),
   );
 }
 
@@ -3635,23 +3655,25 @@ function ParentBreedingResults({
   onQueryChange: (query: string) => void;
 }) {
   const t = useTranslations("palworld-breeding-calculator");
-  const normalizedQuery = normalizeSearchText(query);
+  const hasQuery = Boolean(normalizeResultsSearchText(query));
   const uniqueOutcomes = dedupeParentBreedingOutcomes(outcomes);
-  const matchingOutcomes = normalizedQuery
+  const matchingOutcomes = hasQuery
     ? uniqueOutcomes.filter((outcome) =>
-        normalizeSearchText(
-          [
-            outcome.parentSpecies,
-            outcome.partnerSpecies,
-            outcome.child,
-            safePalLabel(outcome.parentSpecies, locale),
-            safePalLabel(outcome.partnerSpecies, locale),
-            safePalLabel(outcome.child, locale),
-            paldeckBadgeText(outcome.parentSpecies),
-            paldeckBadgeText(outcome.partnerSpecies),
-            paldeckBadgeText(outcome.child),
-          ].join(" "),
-        ).includes(normalizedQuery),
+        matchesResultsSearch(
+          {
+            text: [
+              safePalLabel(outcome.parentSpecies, locale),
+              safePalLabel(outcome.partnerSpecies, locale),
+              safePalLabel(outcome.child, locale),
+            ],
+            paldeckCodes: [
+              gameData.palsByInternal[outcome.parentSpecies]?.paldeckCode,
+              gameData.palsByInternal[outcome.partnerSpecies]?.paldeckCode,
+              gameData.palsByInternal[outcome.child]?.paldeckCode,
+            ],
+          },
+          query,
+        ),
       )
     : uniqueOutcomes;
 
@@ -3675,50 +3697,31 @@ function ParentBreedingResults({
           bg="var(--palworld-success-bg)"
           color="var(--palworld-success-fg)"
         >
-          {t("results.parent_result_count", { count: uniqueOutcomes.length })}
+          {t("results.parent_result_count", {
+            count: hasQuery ? matchingOutcomes.length : uniqueOutcomes.length,
+          })}
         </Badge>
       </HStack>
 
       {uniqueOutcomes.length > 0 ? (
         <Stack gap={3}>
-          <div className="palworld-parent-formula-toolbar">
-            <Box position="relative" w="full" maxW="32rem">
-              <AppIcon
-                as={Search}
-                size="sm"
-                position="absolute"
-                left={3}
-                top="50%"
-                transform="translateY(-50%)"
-                color="var(--palworld-fg-subtle)"
-                pointerEvents="none"
+          <ResultsSearchToolbar
+            id="palworld-parent-results-search"
+            resultsId="palworld-parent-results"
+            value={query}
+            label={t("results.search_label")}
+            placeholder={t("results.parent_search_placeholder")}
+            onQueryChange={onQueryChange}
+          />
+          {hasImportedSave ? (
+            <span className="palworld-parent-inventory-legend">
+              <span
+                className="palworld-parent-inventory-legend__marker"
                 aria-hidden="true"
               />
-              <Input
-                id="palworld-parent-results-search"
-                name="palworld-parent-results-search"
-                type="search"
-                value={query}
-                aria-label={t("results.search_label")}
-                placeholder={t("results.parent_search_placeholder")}
-                ps={10}
-                bg="var(--palworld-surface)"
-                borderColor="var(--palworld-result-search-border)"
-                color="var(--palworld-fg)"
-                _placeholder={{ color: "var(--palworld-fg-faint)" }}
-                onChange={(event) => onQueryChange(event.currentTarget.value)}
-              />
-            </Box>
-            {hasImportedSave ? (
-              <span className="palworld-parent-inventory-legend">
-                <span
-                  className="palworld-parent-inventory-legend__marker"
-                  aria-hidden="true"
-                />
-                {t("results.parent_inventory_legend")}
-              </span>
-            ) : null}
-          </div>
+              {t("results.parent_inventory_legend")}
+            </span>
+          ) : null}
 
           {matchingOutcomes.length > 0 ? (
             <div className="palworld-formula-result-grid">
@@ -4070,30 +4073,18 @@ export default function PalworldBreedingCalculatorPage({
       );
   }, [plan?.mode, plan?.routes, recommendedRouteKeys]);
   const totalRouteCount = allRoutes.length;
-  const activeResultsSearch =
-    showParentBreedingResults &&
-    parentBreedingDataStatus === "ready" &&
-    parentBreedingOutcomes.length > 0
-      ? {
-          mode: "parents" as const,
-          anchorId: "palworld-parent-results-search",
-          boundaryId: "palworld-parent-results",
-          label: t("results.search_label"),
-          placeholder: t("results.parent_search_placeholder"),
-          value: parentRouteQuery,
-          onQueryChange: setParentRouteQuery,
-        }
-      : showTargetBreedingResults && totalRouteCount > 0
-        ? {
-            mode: "target" as const,
-            anchorId: "palworld-breeding-results-search",
-            boundaryId: "palworld-target-results",
-            label: t("results.search_label"),
-            placeholder: t("results.search_placeholder"),
-            value: targetRouteQuery,
-            onQueryChange: setTargetRouteQuery,
-          }
-        : null;
+  const filteredTargetRouteCount = useMemo(
+    () =>
+      plan
+        ? filterBreedingRoutesBySearch(
+            allRoutes,
+            plan.mode,
+            targetRouteQuery,
+            locale,
+          ).length
+        : 0,
+    [allRoutes, locale, plan, targetRouteQuery],
+  );
 
   const ownedPassiveSummary = useMemo(() => {
     if (!preparedUpload) return [];
@@ -4560,9 +4551,6 @@ export default function PalworldBreedingCalculatorPage({
               <Text as="span">CrateX.app</Text>
             </Link>
           </Box>
-          {activeResultsSearch ? (
-            <ResultsSearchDock {...activeResultsSearch} />
-          ) : null}
           <HStack className="palworld-floating-header__actions" gap={2}>
             <HStack className="palworld-language-control" gap={1}>
               <AppIcon
@@ -5279,8 +5267,9 @@ export default function PalworldBreedingCalculatorPage({
                     bg="var(--palworld-surface-a62)"
                     color="var(--palworld-fg-muted)"
                     _hover={{
-                      bg: "var(--palworld-surface-a82)",
-                      borderColor: "var(--palworld-border)",
+                      bg: "var(--palworld-query-tab-hover-bg)",
+                      borderColor: "var(--palworld-query-tab-hover-border)",
+                      color: "var(--palworld-fg)",
                     }}
                     _focusVisible={{
                       outline: "3px solid var(--palworld-focus-ring)",
@@ -5339,8 +5328,9 @@ export default function PalworldBreedingCalculatorPage({
                     bg="var(--palworld-surface-a62)"
                     color="var(--palworld-fg-muted)"
                     _hover={{
-                      bg: "var(--palworld-surface-a82)",
-                      borderColor: "var(--palworld-border)",
+                      bg: "var(--palworld-query-tab-hover-bg)",
+                      borderColor: "var(--palworld-query-tab-hover-border)",
+                      color: "var(--palworld-fg)",
                     }}
                     _focusVisible={{
                       outline: "3px solid var(--palworld-focus-ring)",
@@ -5922,7 +5912,11 @@ export default function PalworldBreedingCalculatorPage({
                     bg="var(--palworld-success-bg)"
                     color="var(--palworld-success-fg)"
                   >
-                    {t("results.route_count", { count: totalRouteCount })}
+                    {t("results.route_count", {
+                      count: normalizeResultsSearchText(targetRouteQuery)
+                        ? filteredTargetRouteCount
+                        : totalRouteCount,
+                    })}
                   </Badge>
                 </HStack>
               </HStack>
@@ -5998,35 +5992,14 @@ export default function PalworldBreedingCalculatorPage({
 
                   {totalRouteCount > 0 ? (
                     <Stack gap={3}>
-                      <Box position="relative" maxW="32rem">
-                        <AppIcon
-                          as={Search}
-                          size="sm"
-                          position="absolute"
-                          left={3}
-                          top="50%"
-                          transform="translateY(-50%)"
-                          color="var(--palworld-fg-subtle)"
-                          pointerEvents="none"
-                          aria-hidden="true"
-                        />
-                        <Input
-                          id="palworld-breeding-results-search"
-                          name="palworld-breeding-results-search"
-                          type="search"
-                          value={targetRouteQuery}
-                          aria-label={t("results.search_label")}
-                          placeholder={t("results.search_placeholder")}
-                          ps={10}
-                          bg="var(--palworld-surface)"
-                          borderColor="var(--palworld-result-search-border)"
-                          color="var(--palworld-fg)"
-                          _placeholder={{ color: "var(--palworld-fg-faint)" }}
-                          onChange={(event) =>
-                            setTargetRouteQuery(event.currentTarget.value)
-                          }
-                        />
-                      </Box>
+                      <ResultsSearchToolbar
+                        id="palworld-breeding-results-search"
+                        resultsId="palworld-target-results"
+                        value={targetRouteQuery}
+                        label={t("results.search_label")}
+                        placeholder={t("results.search_placeholder")}
+                        onQueryChange={setTargetRouteQuery}
+                      />
                       <OwnedRouteSourcesContext.Provider
                         value={ownedRouteSourcesById}
                       >

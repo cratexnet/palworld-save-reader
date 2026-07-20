@@ -7,6 +7,10 @@ const source = readFileSync(
   "utf8",
 );
 const styles = readFileSync(resolve("app/src/styles.css"), "utf8");
+const resultsSearchToolbarSource = readFileSync(
+  resolve("app/src/ResultsSearchToolbar.tsx"),
+  "utf8",
+);
 
 function dialogSource(testId: string) {
   const marker = source.indexOf(`data-testid="${testId}"`);
@@ -286,7 +290,7 @@ describe("standalone calculator page simplification", () => {
   it("keeps formula routes compact before the inventory master-detail browser", () => {
     const collectionSource = source.slice(
       source.indexOf("function RouteCollection("),
-      source.indexOf("function routeSearchText("),
+      source.indexOf("function createRouteSearchEntry("),
     );
 
     expect(collectionSource).toContain('if (mode === "formula")');
@@ -935,6 +939,16 @@ describe("standalone calculator page simplification", () => {
     expect(styles).toContain(
       "--palworld-query-tab-selected-hover-bg: linear-gradient(",
     );
+    expect(
+      queryTabs.match(/bg: "var\(--palworld-query-tab-hover-bg\)"/gu) ?? [],
+    ).toHaveLength(2);
+    expect(
+      queryTabs.match(
+        /borderColor: "var\(--palworld-query-tab-hover-border\)"/gu,
+      ) ?? [],
+    ).toHaveLength(2);
+    expect(styles).toContain("--palworld-query-tab-hover-bg:");
+    expect(styles).toContain("--palworld-query-tab-hover-border:");
   });
 
   it("shows every general formula without nested disclosure controls", () => {
@@ -1575,33 +1589,55 @@ describe("standalone calculator page simplification", () => {
   });
 
   it("keeps every formula route available without incremental show-more controls", () => {
-    expect(source).toContain("const matchingRoutes = normalizedQuery");
+    expect(source).toContain(
+      "const matchingRoutes = filterBreedingRoutesBySearch(",
+    );
     expect(source).toContain("matchingRoutes.map((route)");
     expect(source).not.toContain("FORMULA_INITIAL_VISIBLE_ROUTE_COUNT");
     expect(source).not.toContain("FORMULA_VISIBLE_ROUTE_COUNT_STEP");
     expect(source).not.toContain('t("results.show_more_routes"');
     expect(source).toContain("INVENTORY_PRIORITY_ROUTE_COUNT");
-    expect(source).toContain('type="search"');
+    expect(resultsSearchToolbarSource).toContain('type="search"');
     expect(source).toContain('id="palworld-parent-results-search"');
-    expect(source).toContain('name="palworld-parent-results-search"');
     expect(source).toContain('id="palworld-breeding-results-search"');
-    expect(source).toContain('name="palworld-breeding-results-search"');
+    expect(resultsSearchToolbarSource).toContain("name={id}");
     expect(styles).toContain("content-visibility: auto");
   });
 
-  it("keeps result filters available in one responsive floating dock", () => {
-    expect(source).toContain(
-      'import ResultsSearchDock from "./ResultsSearchDock"',
+  it("matches route filters against visible labels and exact Paldeck codes", () => {
+    const routeSearch = source.slice(
+      source.indexOf("function createRouteSearchEntry("),
+      source.indexOf("function CompactFormulaRouteRow("),
     );
-    expect(source.match(/<ResultsSearchDock/gu)).toHaveLength(1);
-    expect(source).toContain('anchorId: "palworld-parent-results-search"');
-    expect(source).toContain('boundaryId: "palworld-parent-results"');
-    expect(source).toContain('anchorId: "palworld-breeding-results-search"');
-    expect(source).toContain('boundaryId: "palworld-target-results"');
-    expect(styles).toContain(".palworld-results-search-dock {");
-    expect(styles).toContain("position: fixed;");
-    expect(styles).toContain("@media (min-width: 62rem)");
-    expect(styles).toContain("env(safe-area-inset-bottom)");
+
+    expect(routeSearch).toContain("matchesResultsSearch");
+    expect(routeSearch).toContain("paldeckCode");
+    expect(routeSearch).toContain("step.parent1.species");
+    expect(routeSearch).toContain("step.parent2.species");
+    expect(routeSearch).not.toContain("routeDisplayKey");
+    expect(routeSearch).not.toContain("requirement.itemId");
+    expect(routeSearch).not.toContain("step.child");
+  });
+
+  it("keeps result filters in one stable responsive sticky toolbar", () => {
+    expect(source).toContain(
+      'import ResultsSearchToolbar from "./ResultsSearchToolbar"',
+    );
+    expect(source.match(/<ResultsSearchToolbar/gu)).toHaveLength(2);
+    expect(source).not.toContain("<ResultsSearchDock");
+    expect(source).not.toContain("activeResultsSearch");
+    expect(resultsSearchToolbarSource).toContain(
+      'aria-label={commonT("clear")}',
+    );
+    expect(resultsSearchToolbarSource).toContain('onQueryChange("")');
+    expect(resultsSearchToolbarSource).toContain("inputRef.current?.focus()");
+    const toolbarStyles = styles.slice(
+      styles.indexOf(".palworld-results-search-toolbar {"),
+      styles.indexOf(".palworld-shell-fallback {"),
+    );
+    expect(toolbarStyles).toContain("position: sticky;");
+    expect(toolbarStyles).not.toContain("position: fixed;");
+    expect(toolbarStyles).toContain("::-webkit-search-cancel-button");
   });
 
   it("lays out compact formula results in responsive one-to-three-column grids", () => {
@@ -1616,13 +1652,12 @@ describe("standalone calculator page simplification", () => {
   it("mounts only prioritized inventory summaries and the selected detail", () => {
     const collectionSource = source.slice(
       source.indexOf("function RouteCollection("),
-      source.indexOf("function routeSearchText("),
+      source.indexOf("function createRouteSearchEntry("),
     );
 
     expect(collectionSource).toContain(
-      "const matchingRoutes = normalizedQuery\n    ? searchableRoutes.filter",
+      "const matchingRoutes = filterBreedingRoutesBySearch(",
     );
-    expect(collectionSource).toContain(": searchableRoutes;");
     expect(collectionSource).toContain("routes={prioritizedRoutes}");
     expect(collectionSource).toContain("routes.map((route, index)");
     expect(collectionSource).toContain("const selectedRoute =");
@@ -1698,15 +1733,14 @@ describe("standalone calculator page simplification", () => {
   it("keeps both inventory readiness tabs visible and disables empty groups", () => {
     const collectionSource = source.slice(
       source.indexOf("function RouteCollection("),
-      source.indexOf("function routeSearchText("),
+      source.indexOf("function createRouteSearchEntry("),
     );
 
     expect(collectionSource).toContain(
       'const inventoryGroupKeys = ["parents_owned", "needs_supplement"]',
     );
-    expect(collectionSource).toContain(
-      'route.group === "parents_owned" || route.group === "needs_supplement"',
-    );
+    expect(source).toContain('route.group === "parents_owned" ||');
+    expect(source).toContain('route.group === "needs_supplement"');
     expect(collectionSource).toContain('data-testid="inventory-route-tabs"');
     expect(collectionSource).toContain(
       'data-testid="inventory-route-tab-list"',
@@ -1847,7 +1881,7 @@ describe("standalone calculator page simplification", () => {
       source.match(/<RouteCollection[\s\S]*?\/>/u)?.[0] ?? "";
     const collectionSource = source.slice(
       source.indexOf("function RouteCollection("),
-      source.indexOf("function routeSearchText("),
+      source.indexOf("function createRouteSearchEntry("),
     );
 
     expect(collectionCall).toContain("searchMeta={plan.searchMeta}");
