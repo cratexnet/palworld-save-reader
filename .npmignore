@@ -1,0 +1,6 @@
+app/passive-skill-prototype.html
+src/data/palcalc-v22*
+src/data/palworld-v1-catalog.spec.ts
+src/public-boundary.spec.ts
+vendor/palworld-ooz/build/*
+!vendor/palworld-ooz/build/ooz.js

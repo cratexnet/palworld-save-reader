@@ -1,0 +1,230 @@
+{
+  "meta_title": "Palworld Breeding Calculator",
+  "meta_description": "Plan Palworld breeding routes from your own local save. The save stays in your browser; only owned Pal species, gender, slot, and passives are uploaded.",
+  "hero": {
+    "title": "Palworld Breeding Calculator",
+    "subtitle": "Import Level.sav to plan routes from your party, personal Palbox, and base workers to the target Pal and passive skills. You can also search general formulas without importing a save.",
+    "data_badge": "{compatibility} · {palCount} Pals / {passiveCount} passives"
+  },
+  "share": {
+    "query": "Share current query",
+    "tool": "Share this tool",
+    "copied": "Link copied.",
+    "failed": "Could not copy the link."
+  },
+  "error": {
+    "invalid_save": "This does not look like a readable Palworld Level.sav. Choose the world Level.sav file, not a player save or another file.",
+    "oodle": "The browser could not load the Oodle decoder. Refresh and try again in Chrome or another Chromium browser.",
+    "structure": "This save structure is not supported by the current parser yet.",
+    "decompression": "The save payload could not be decompressed. The file may be incomplete or from an unsupported save wrapper.",
+    "parser_failed": "The save could not be read in this browser. Reload the page and try again.",
+    "parser_timeout": "Reading the save took too long. Close other memory-heavy tabs and try again.",
+    "api_unreachable": "Routes cannot be calculated right now. Try again shortly.",
+    "payload_too_large": "The compact owned-Pals upload is too large for the calculator API.",
+    "invalid_payload": "The calculator API could not read the compact owned-Pals payload.",
+    "unsupported_upload": "The calculator API rejected the upload format.",
+    "api_server": "Route planning is temporarily unavailable. Try again shortly.",
+    "target_required": "Choose a target Pal.",
+    "parent_required": "Choose at least one parent Pal.",
+    "invalid_request": "The calculator request is incomplete."
+  },
+  "upload": {
+    "ready_title": "Save parsed locally",
+    "replace_title": "Replace Level.sav",
+    "replace_description": "Choosing another save replaces the current Pal data and selected passives.",
+    "action": "Import save to mark owned and missing",
+    "action_suffix": "to show how many of each Pal you own in query results:",
+    "ready_action": "Imported {count} Pals",
+    "reread_action": "Reread save",
+    "close": "Close",
+    "cancel": "Cancel",
+    "title": "Import save file (optional)",
+    "input_label": "Palworld Level.sav save file",
+    "drop_title": "Select or drop Level.sav",
+    "parsing": "Reading save locally...",
+    "payload_ready": "{count} Pals owned by you were identified locally. Only their species, gender, source slot, and passive skills will be sent; the raw save and all other data stay local.",
+    "clear_action": "Clear imported data",
+    "clear_description": "Clears only the parsed data in this browser. Your local Level.sav is not changed or deleted."
+  },
+  "save_locations": {
+    "title": "Where is Level.sav?",
+    "description": "Find Level.sav in the location below, then select it or drop it here.",
+    "backup_warning": "Do not edit the original save. If you have several worlds, choose the world folder with the latest modified time.",
+    "tabs": {
+      "steam_windows": "Steam (Windows)",
+      "game_pass": "Xbox app / PC Game Pass",
+      "steam_deck": "Steam Deck",
+      "steam_linux": "Linux (Steam)",
+      "dedicated_server": "Server"
+    },
+    "tabs_compact": {
+      "steam_windows": "Win",
+      "game_pass": "Xbox",
+      "steam_deck": "Deck",
+      "steam_linux": "Linux",
+      "dedicated_server": "Server"
+    },
+    "items": {
+      "steam_windows": {
+        "path": "%LOCALAPPDATA%\\Pal\\Saved\\SaveGames\\<SteamID>\\<WorldId>\\Level.sav",
+        "note": "Paste the first part into File Explorer. <WorldId> is the long folder name for a world."
+      },
+      "game_pass": {
+        "path": "%LOCALAPPDATA%\\Packages\\PocketpairInc.Palworld_ad4psfrxyesvt\\SystemAppData\\wgs\\",
+        "note": "Open this WGS folder, then use an Xbox save extractor to export the Palworld save before uploading it here.",
+        "warning": "Xbox saves are WGS containers. Export or convert the save to Level.sav first."
+      },
+      "steam_deck": {
+        "path": "/home/deck/.local/share/Steam/steamapps/compatdata/1623730/pfx/drive_c/users/steamuser/AppData/Local/Pal/Saved/SaveGames/<SteamID>/<WorldId>/Level.sav",
+        "note": "Switch to Desktop Mode and show hidden files in Dolphin. If Palworld is installed on a microSD card, open that Steam library instead."
+      },
+      "steam_linux": {
+        "path": "~/.local/share/Steam/steamapps/compatdata/1623730/pfx/drive_c/users/steamuser/AppData/Local/Pal/Saved/SaveGames/<SteamID>/<WorldId>/Level.sav",
+        "note": "Some Steam installations use ~/.steam/steam or a custom library. Find app 1623730 under that library's compatdata folder."
+      },
+      "dedicated_server": {
+        "path": "Pal/Saved/SaveGames/0/<WorldId>/Level.sav",
+        "note": "Start from the PalServer installation directory. For a rented server, open the hosting provider's file manager and locate this same path."
+      }
+    }
+  },
+  "owned_passives": {
+    "title": "Owned passive suggestions"
+  },
+  "calculator": {
+    "plan_formula": "View breeding results",
+    "owned_count": "Owned ×{count}",
+    "query_mode_target_tab": "Target breeding",
+    "query_mode_parents_tab": "Parent lookup",
+    "query_mode_target_description": "Choose a target child Pal; optionally add a starting parent and inherited passives.",
+    "query_mode_parents_description": "Choose Parent A and optionally Parent B to find possible children and formulas.",
+    "swap_selections": "Swap selections",
+    "parent_a": "Parent A",
+    "parent_b": "Parent B",
+    "parent_placeholder": "Search a Pal name or number",
+    "plan_inventory": "View breeding results",
+    "title": "Breeding lookup",
+    "target_label": "Target Pal",
+    "starting_parent": "Starting parent (optional)",
+    "starting_parent_auto": "Auto-select from save",
+    "starting_parent_any": "Any parent Pal",
+    "target_placeholder": "Search Pal name or number",
+    "passives": "Passive skills to inherit (optional)",
+    "passive_count": "{count} selected",
+    "passive_locked": "Import a save to choose up to 4 target passive skills. The calculator will use your owned Pals to calculate inheritance routes.",
+    "import_save_link": "Import a save",
+    "import_save_optional": "Import save (optional)",
+    "passive_select_action": "Choose passive skills (up to 4)",
+    "passive_group_missing": "Not found in this save",
+    "passive_tier_worldTree": "World Tree passives",
+    "passive_tier_prismatic": "Prismatic passives",
+    "passive_tier_gold": "Gold passives",
+    "passive_tier_common": "Common passives",
+    "passive_tier_negative": "Negative passives",
+    "passive_limit": "Choose up to 4 passive skills.",
+    "passive_done": "Done",
+    "passive_placeholder": "Search passive skill name or effect",
+    "passive_ready": "Search all {count} passive skills. Skills found in your save are grouped separately.",
+    "planning": "Calculating...",
+    "retry": "Retry"
+  },
+  "combobox": {
+    "no_results": "No matching option"
+  },
+  "results": {
+    "title": "Breeding results",
+    "summary": "Calculated from {inventoryCount} Pals you own.",
+    "route_count": "Breeding options found: {count}",
+    "parent_lookup_title": "Parent breeding results",
+    "parent_result_count": "{count} formulas",
+    "parent_inventory_legend": "×N shows the number in your save.",
+    "parent_inventory_count": "{count} owned in save",
+    "parent_search_placeholder": "Search parent, child, or number",
+    "parent_loading": "Loading complete breeding data...",
+    "parent_load_error": "Breeding data could not be loaded. Check your connection and retry.",
+    "target_already_owned": "Your save already has {count} matching target Pals",
+    "target_already_owned_description": "You can use an existing Pal now; the breeding routes remain available for further breeding.",
+    "no_routes": "No breeding options were found for the selected target and passives.",
+    "no_matching_routes": "No breeding results match this search.",
+    "search_label": "Search breeding results",
+    "search_placeholder": "Search by Pal name, number, or passive skill",
+    "group_count": "Options: {count}",
+    "inventory_groups_label": "Route readiness",
+    "priority_routes": "Priority routes",
+    "priority_route_count": "Showing the top {shown} of {total} routes",
+    "back_to_routes": "Back to route list",
+    "excluded_by_policy": "{count} candidate breeding formulas with at least 3 blockers were excluded.",
+    "search_truncated": "Search limit reached. Showing the best {count} routes found so far; more eligible routes may exist.",
+    "search_truncated_empty": "Search reached the computation limit before finding a displayable route. Results are incomplete; try fewer passive skills or choose a starting parent.",
+    "groups": {
+      "formula": "All formulas",
+      "generation_1": "1 generation",
+      "generation_2": "2 generations",
+      "generation_3": "3 generations",
+      "missing": "Missing requirements",
+      "parents_owned": "Owned",
+      "needs_supplement": "Need to add"
+    }
+  },
+  "routes": {
+    "recommended": "Recommended",
+    "closest": "Closest match",
+    "ready_now": "Ready now",
+    "parents_owned_status": "Owned · Ready now",
+    "needs_supplement_status": "Need to add {count}",
+    "requirements_title": "Actions required to complete this route",
+    "missing_passive": "Missing passive",
+    "gender_reverse_item": "Pal Reverser ×{quantity}",
+    "gender_reverse_target": "Use on {pal}, parent {parent} in step {step}; target gender: {gender}.",
+    "passive_implant_item": "Implant: {passive} ×{quantity}",
+    "implant_ready": "Completable with implants",
+    "implant_available": "Available through passive skill implants",
+    "implant_purchase": "Buy from {vendor}: {cost} {currency}",
+    "implant_instruction": "After breeding, use the matching passive skill implant on the target child Pal.",
+    "implant_vendors": {
+      "bounty_shop": "Bounty Shop",
+      "arena_shop": "Arena Shop"
+    },
+    "implant_currencies": {
+      "successful_bounty_token": "Successful Bounty Tokens",
+      "battle_ticket": "Battle Tickets"
+    },
+    "unavailable_parents": "Needs {count} parents",
+    "incomplete": "Missing {count}",
+    "step_count": "{count} steps",
+    "final_child": "final child",
+    "missing": "Missing passives: {passives}",
+    "steps": "Breeding steps",
+    "step_label": "Step {index}",
+    "parent_owned": "Owned and usable",
+    "parent_incompatible": "Owned, wrong gender",
+    "parent_missing": "Not owned",
+    "parent_intermediate": "Bred in this route",
+    "parent_unknown": "Save not checked",
+    "sources": "Start from your save",
+    "sources_with_alternatives": "{count} other available combinations",
+    "alternatives_limited": "Showing the first {count} alternative combinations.",
+    "intermediate": "intermediate",
+    "inheritance_notice": "A route only shows that target passives can enter the offspring pool. In-game inheritance is still random and does not guarantee the target combination in one attempt.",
+    "slot": "slot {slot}",
+    "no_slot": "source slot unknown",
+    "location_party": "Party\nslot {slot}",
+    "location_palbox": "Palbox\nslot {slot}",
+    "location_palbox_position": "Palbox · page {page}\nrow {row} · column {column}",
+    "location_base": "Base\nslot {slot}",
+    "location_other": "Other owner-linked container\nslot {slot}"
+  },
+  "gender": {
+    "male": "Male",
+    "female": "Female",
+    "unknown": "Unknown gender",
+    "any": "Any gender"
+  },
+  "open_source": {
+    "title": "Open-source save parser",
+    "description": "The browser-side save parser is distributed under GPL-3.0-or-later so its local data handling can be audited.",
+    "source": "Source code",
+    "license": "GPL-3.0 license",
+    "unofficial": "Unofficial fan-made tool. Not affiliated with Pocketpair."
+  }
+}

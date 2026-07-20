@@ -1,0 +1,74 @@
+{
+  "name": "palworld-save-reader",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cratexnet/palworld-save-reader.git"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./public-client": {
+      "types": "./dist/public-client.d.ts",
+      "default": "./dist/public-client.js"
+    },
+    "./ooz-wasm": {
+      "types": "./dist/ooz-wasm-decoder.d.ts",
+      "default": "./dist/ooz-wasm-decoder.js"
+    }
+  },
+  "files": [
+    "app",
+    "!app/passive-skill-prototype.html",
+    "dist",
+    "src",
+    "!src/data/palworld-v1-catalog.spec.ts",
+    "!src/public-boundary.spec.ts",
+    "scripts/clean-build-output.mjs",
+    "scripts/fix-dist-imports.mjs",
+    "scripts/smoke-real-save.mjs",
+    "tsconfig.json",
+    "tsconfig.app.json",
+    "tsconfig.build.json",
+    "vitest.config.ts",
+    "vendor/palworld-ooz",
+    "BRAND_AND_ASSET_NOTICE.md",
+    "COPYRIGHT",
+    "LICENSE",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "scripts": {
+    "build": "node scripts/clean-build-output.mjs && tsc -p tsconfig.build.json && node scripts/fix-dist-imports.mjs",
+    "build:app": "vite build app --outDir ../dist-app --emptyOutDir",
+    "dev:app": "vite app --host 0.0.0.0",
+    "format:check": "prettier --check \"src/**/*.{ts,md}\" \"app/**/*.{html,ts,tsx,css,json}\" \"scripts/**/*.mjs\" \"*.{json,md}\"",
+    "preview:app": "vite preview --config app/vite.config.ts --outDir dist-app --host 0.0.0.0",
+    "smoke:real-save": "pnpm build && node scripts/smoke-real-save.mjs",
+    "test": "vitest run",
+    "type-check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.app.json --noEmit"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^3.36.0",
+    "@emotion/react": "^11.14.0",
+    "fflate": "^0.8.3",
+    "lucide-react": "^1.23.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "prettier": "^3.9.4",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.3",
+    "vitest": "^4.1.10"
+  },
+  "packageManager": "pnpm@11.5.1"
+}
