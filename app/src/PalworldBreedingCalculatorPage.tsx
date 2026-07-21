@@ -3678,41 +3678,54 @@ function ParentBreedingResults({
     : uniqueOutcomes;
 
   return (
-    <Stack
+    <Grid
       id="palworld-parent-results"
+      className="palworld-parent-results-grid"
       w="full"
       maxW={CALCULATOR_CONTENT_MAX_WIDTH}
       mx="auto"
-      gap={4}
+      templateColumns={{
+        base: "minmax(0, 1fr) auto",
+        lg: "auto minmax(16rem, 32rem) auto",
+      }}
+      columnGap={{ base: 3, lg: 4 }}
+      rowGap={{ base: 3, lg: 4 }}
+      alignItems="center"
+      justifyContent="space-between"
     >
-      <HStack justify="space-between" align="center" gap={3} flexWrap="wrap">
-        <Heading
-          as="h2"
-          fontSize={{ base: "xl", md: "2xl" }}
-          color="var(--palworld-accent-contrast)"
-        >
-          {t("results.parent_lookup_title")}
-        </Heading>
-        <Badge
-          bg="var(--palworld-success-bg)"
-          color="var(--palworld-success-fg)"
-        >
-          {t("results.parent_result_count", {
-            count: hasQuery ? matchingOutcomes.length : uniqueOutcomes.length,
-          })}
-        </Badge>
-      </HStack>
+      <Heading
+        as="h2"
+        gridColumn={1}
+        gridRow={1}
+        fontSize={{ base: "xl", md: "2xl" }}
+        color="var(--palworld-accent-contrast)"
+      >
+        {t("results.parent_lookup_title")}
+      </Heading>
+      {uniqueOutcomes.length > 0 ? (
+        <ResultsSearchToolbar
+          id="palworld-parent-results-search"
+          resultsId="palworld-parent-results"
+          value={query}
+          label={t("results.search_label")}
+          placeholder={t("results.parent_search_placeholder")}
+          onQueryChange={onQueryChange}
+        />
+      ) : null}
+      <Badge
+        gridColumn={{ base: 2, lg: 3 }}
+        gridRow={1}
+        justifySelf="end"
+        bg="var(--palworld-success-bg)"
+        color="var(--palworld-success-fg)"
+      >
+        {t("results.parent_result_count", {
+          count: hasQuery ? matchingOutcomes.length : uniqueOutcomes.length,
+        })}
+      </Badge>
 
       {uniqueOutcomes.length > 0 ? (
-        <Stack gap={3}>
-          <ResultsSearchToolbar
-            id="palworld-parent-results-search"
-            resultsId="palworld-parent-results"
-            value={query}
-            label={t("results.search_label")}
-            placeholder={t("results.parent_search_placeholder")}
-            onQueryChange={onQueryChange}
-          />
+        <Stack gridColumn="1 / -1" gridRow={{ base: 3, lg: 2 }} gap={3}>
           {hasImportedSave ? (
             <span className="palworld-parent-inventory-legend">
               <span
@@ -3773,12 +3786,12 @@ function ParentBreedingResults({
           )}
         </Stack>
       ) : (
-        <Alert.Root status="info">
+        <Alert.Root gridColumn="1 / -1" gridRow={2} status="info">
           <Alert.Indicator />
           <Alert.Description>{t("results.no_routes")}</Alert.Description>
         </Alert.Root>
       )}
-    </Stack>
+    </Grid>
   );
 }
 

@@ -1619,7 +1619,34 @@ describe("standalone calculator page simplification", () => {
     expect(routeSearch).not.toContain("step.child");
   });
 
-  it("keeps result filters in one stable responsive sticky toolbar", () => {
+  it("keeps the parent result search in a responsive grid spanning the full result list", () => {
+    const parentResults = source.slice(
+      source.indexOf("function ParentBreedingResults("),
+      source.indexOf("function CompactFormulaPal("),
+    );
+
+    expect(parentResults).toContain('className="palworld-parent-results-grid"');
+    expect(parentResults).toContain('lg: "auto minmax(16rem, 32rem) auto"');
+    expect(parentResults).toContain('gridColumn="1 / -1"');
+    expect(parentResults).toContain("gridRow={{ base: 3, lg: 2 }}");
+    expect(
+      parentResults.indexOf('t("results.parent_lookup_title")'),
+    ).toBeLessThan(parentResults.indexOf("<ResultsSearchToolbar"));
+    expect(parentResults.indexOf("<ResultsSearchToolbar")).toBeLessThan(
+      parentResults.indexOf("<Badge"),
+    );
+    expect(styles).toContain(
+      ".palworld-parent-results-grid > .palworld-results-search-toolbar {",
+    );
+    expect(styles).toMatch(
+      /\.palworld-parent-results-grid > \.palworld-results-search-toolbar \{\s*grid-column: 1 \/ -1;\s*grid-row: 2;/u,
+    );
+    expect(styles).toMatch(
+      /@media \(min-width: 62rem\) \{[\s\S]*?\.palworld-parent-results-grid > \.palworld-results-search-toolbar \{\s*grid-column: 2;\s*grid-row: 1;/u,
+    );
+  });
+
+  it("keeps result filters available in one stable responsive sticky dock", () => {
     expect(source).toContain(
       'import ResultsSearchToolbar from "./ResultsSearchToolbar"',
     );
@@ -1637,6 +1664,15 @@ describe("standalone calculator page simplification", () => {
     );
     expect(toolbarStyles).toContain("position: sticky;");
     expect(toolbarStyles).not.toContain("position: fixed;");
+    expect(toolbarStyles).toContain("max-width: 32rem;");
+    expect(toolbarStyles).toContain("padding: 4px;");
+    expect(toolbarStyles).toContain("background: var(--palworld-canvas);");
+    expect(toolbarStyles).toContain(
+      "border: 1px solid var(--palworld-canvas-border);",
+    );
+    expect(toolbarStyles).toContain(
+      "box-shadow: var(--palworld-floating-shadow);",
+    );
     expect(toolbarStyles).toContain("::-webkit-search-cancel-button");
   });
 
