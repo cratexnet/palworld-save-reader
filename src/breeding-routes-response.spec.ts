@@ -337,6 +337,63 @@ describe("Palworld breeding routes response parser", () => {
     );
   });
 
+  it("accepts three blockers as a route that needs supplementation", () => {
+    const base = createValidMissingParentResponse();
+    const baseRoute = base.routes[0]!;
+    const route = {
+      ...baseRoute,
+      missingPassives: ["Legend"],
+      requirements: [
+        ...baseRoute.requirements,
+        { type: "missing_passive", passiveId: "Legend" },
+      ],
+      complexity: {
+        ...baseRoute.complexity,
+        unresolvedPassiveCount: 1,
+        blockerCount: 3,
+      },
+    };
+    const response = {
+      ...base,
+      desiredPassiveIds: ["Legend"],
+      routes: [route],
+    };
+
+    expect(parsePalworldBreedingRoutesResponse(response)).toBe(response);
+  });
+
+  it("accepts four blockers only in the excluded policy group", () => {
+    const base = createValidMissingParentResponse();
+    const baseRoute = base.routes[0]!;
+    const route = {
+      ...baseRoute,
+      missingPassives: ["Legend", "Swift"],
+      requirements: [
+        ...baseRoute.requirements,
+        { type: "missing_passive", passiveId: "Legend" },
+        { type: "missing_passive", passiveId: "Swift" },
+      ],
+      complexity: {
+        ...baseRoute.complexity,
+        unresolvedPassiveCount: 2,
+        blockerCount: 4,
+      },
+      group: "excluded_by_policy",
+    };
+    const response = {
+      ...base,
+      desiredPassiveIds: ["Legend", "Swift"],
+      routes: [route],
+      routesByGroup: {
+        ...base.routesByGroup,
+        needsSupplement: [],
+        excludedByPolicy: [0],
+      },
+    };
+
+    expect(parsePalworldBreedingRoutesResponse(response)).toBe(response);
+  });
+
   it("rejects duplicate requirements and contradictory availability/source pairs", () => {
     const duplicateRequirement = structuredClone(
       createValidMissingParentResponse(),

@@ -275,7 +275,7 @@ function hasConsistentExecutionClassification(route: PalworldBreedingRoute) {
     deterministicItemActionCount;
   const expectedGroup = hasUnknownParent
     ? "formula"
-    : route.steps.length > 3 || blockerCount >= 3
+    : route.steps.length > 3 || blockerCount > 3
       ? "excluded_by_policy"
       : blockerCount === 0
         ? "parents_owned"

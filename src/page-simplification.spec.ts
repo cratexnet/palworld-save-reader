@@ -479,13 +479,16 @@ describe("standalone calculator page simplification", () => {
     ) as Record<string, unknown>;
     const leafKeys = flattenMessageKeys(messages);
 
-    expect(leafKeys).toHaveLength(182);
+    expect(leafKeys).toHaveLength(185);
     expect(leafKeys).toContain("upload.reread_action");
     expect(leafKeys).not.toContain("results.show_more_routes");
     expect(leafKeys).toContain("results.priority_routes");
     expect(leafKeys).toContain("results.priority_route_count");
     expect(leafKeys).toContain("results.back_to_routes");
     expect(leafKeys).toContain("results.search_truncated_empty");
+    expect(leafKeys).toContain("calculator.starting_parent_auto_hint");
+    expect(leafKeys).toContain("results.formula_starting_parent");
+    expect(leafKeys).toContain("results.starting_parent_not_owned");
     expect(leafKeys).toContain("routes.sources_with_alternatives");
     expect(leafKeys).toContain("routes.alternatives_limited");
     expect(leafKeys).toContain("routes.location_palbox_position");
@@ -497,6 +500,15 @@ describe("standalone calculator page simplification", () => {
     expect(leafKeys).not.toContain("upload.description");
     expect(leafKeys).not.toContain("upload.payload_description");
     expect(leafKeys).not.toContain("save_locations.items.steam_windows.system");
+  });
+
+  it("explains automatic, formula, and unavailable starting parents", () => {
+    expect(source).toContain('data-testid="starting-parent-auto-hint"');
+    expect(source).toContain('t("calculator.starting_parent_auto_hint")');
+    expect(source).toContain('data-testid="formula-starting-parent-notice"');
+    expect(source).toContain('t("results.formula_starting_parent"');
+    expect(source).toContain("!palOwnedCounts.has(startingSpecies)");
+    expect(source).toContain('t("results.starting_parent_not_owned"');
   });
 
   it("uses a lookup icon for the primary breeding query action", () => {

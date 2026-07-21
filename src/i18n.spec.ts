@@ -250,7 +250,7 @@ describe("standalone app localization", () => {
     expect(strings["results.groups.parents_owned"]).toBe("Owned");
     expect(strings["results.groups.needs_supplement"]).toBe("Need to add");
     expect(strings["results.excluded_by_policy"]).toBe(
-      "{count} candidate breeding formulas with at least 3 blockers were excluded.",
+      "{count} candidate breeding formulas with more than 3 blockers were excluded.",
     );
     expect(strings["results.search_truncated"]).toContain("{count}");
     expect(strings["results.search_truncated_empty"]).toBe(

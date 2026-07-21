@@ -153,6 +153,7 @@ import { mapSaveParserErrorToMessageKey } from "../../src/save-parser-error-mess
 const CALCULATOR_CONTENT_MAX_WIDTH = "80rem";
 const INVENTORY_PRIORITY_ROUTE_COUNT = 8;
 const MAX_PASSIVE_SELECTION = 4;
+const EMPTY_OWNED_PALS_PAYLOAD = { v: 1, pals: [] } as const;
 const PASSIVE_LABEL_FONT_SIZES = [14, 13, 12, 11.25] as const;
 const PASSIVE_TIER_KEYS = [
   "worldTree",
@@ -4438,16 +4439,18 @@ export default function PalworldBreedingCalculatorPage({
     try {
       await waitForNextPaint();
       let nextPlan: PalworldBreedingRoutesResponse;
-      if (preparedUpload) {
+      if (preparedUpload || startingSpecies) {
+        const uploadPayload = preparedUpload ?? EMPTY_OWNED_PALS_PAYLOAD;
         const encoded = (
           await import("../../src/payload-codec")
-        ).encodeOwnedPalsPayloadUpload(preparedUpload);
+        ).encodeOwnedPalsPayloadUpload(uploadPayload);
         const request = createPalworldBreedingRoutesFetchInput({
           apiBaseUrl: resolveBreedingRoutesApiBaseUrl(),
           encoded,
+          mode: preparedUpload ? undefined : "formula",
           targetSpecies: selectedTarget,
           startingSpecies,
-          passiveIds: selectedPassiveIds,
+          passiveIds: preparedUpload ? selectedPassiveIds : [],
         });
         const response = await fetch(request.url, request.init);
         if (!response.ok) {
@@ -5477,6 +5480,17 @@ export default function PalworldBreedingCalculatorPage({
                           locale={locale}
                           onChange={handleStartingSpeciesChange}
                         />
+                        {preparedUpload && !startingSpecies ? (
+                          <Text
+                            data-testid="starting-parent-auto-hint"
+                            mt={1.5}
+                            fontSize="xs"
+                            color="var(--palworld-fg-muted)"
+                            lineHeight="1.5"
+                          >
+                            {t("calculator.starting_parent_auto_hint")}
+                          </Text>
+                        ) : null}
                       </Box>
                     </Grid>
                   </Tabs.Content>
@@ -5958,6 +5972,27 @@ export default function PalworldBreedingCalculatorPage({
                   </Text>
                 </HStack>
               ) : null}
+              {plan.mode === "formula" && plan.startingSpecies ? (
+                <HStack
+                  data-testid="formula-starting-parent-notice"
+                  gap={2}
+                  align="start"
+                  color="var(--palworld-canvas-fg-muted)"
+                >
+                  <AppIcon
+                    as={CircleAlert}
+                    size="sm"
+                    mt={0.5}
+                    flexShrink={0}
+                    aria-hidden="true"
+                  />
+                  <Text fontSize="xs" lineHeight="1.55">
+                    {t("results.formula_starting_parent", {
+                      pal: safePalLabel(plan.startingSpecies, locale),
+                    })}
+                  </Text>
+                </HStack>
+              ) : null}
 
               <SearchTruncationNotice searchMeta={plan.searchMeta} />
 
@@ -5967,7 +6002,13 @@ export default function PalworldBreedingCalculatorPage({
                   <Alert.Root status="info">
                     <Alert.Indicator />
                     <Alert.Description>
-                      {t("results.no_routes")}
+                      {plan.mode === "inventory" &&
+                      startingSpecies &&
+                      !palOwnedCounts.has(startingSpecies)
+                        ? t("results.starting_parent_not_owned", {
+                            pal: safePalLabel(startingSpecies, locale),
+                          })
+                        : t("results.no_routes")}
                     </Alert.Description>
                   </Alert.Root>
                 ) : null

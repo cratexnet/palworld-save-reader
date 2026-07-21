@@ -68,12 +68,12 @@ describe("standalone planner interaction performance", () => {
       "normalizeOwnedPalsPayload",
     );
     expect(source).toContain('await import("../../src/payload-codec")');
-    expect(planHandler).not.toContain("preparedUpload ??");
+    expect(planHandler).toContain("preparedUpload ?? EMPTY_OWNED_PALS_PAYLOAD");
     expect(source).not.toContain('"../../src/ooz-wasm-decoder"');
     expect(saveParserWorkerSource).toContain('"../../src/ooz-wasm-decoder"');
   });
 
-  it("uses static shards for no-save and parent queries while retaining the save POST", () => {
+  it("uses the API for scoped target routes and static shards for unscoped formulas", () => {
     const planHandler = source.slice(
       source.indexOf("async function handlePlanRoutes"),
       source.indexOf("async function handleSubmitBreedingQuery"),
@@ -84,8 +84,14 @@ describe("standalone planner interaction performance", () => {
     );
 
     expect(source).toContain('from "../../src/static-breeding-data"');
-    expect(planHandler).toContain("if (preparedUpload)");
+    expect(planHandler).toContain("if (preparedUpload || startingSpecies)");
     expect(planHandler).toContain("createPalworldBreedingRoutesFetchInput");
+    expect(planHandler).toContain(
+      'mode: preparedUpload ? undefined : "formula"',
+    );
+    expect(planHandler).toContain(
+      "passiveIds: preparedUpload ? selectedPassiveIds : []",
+    );
     expect(planHandler).toContain("loadTargetShard(selectedTarget)");
     expect(planHandler).toContain("createFormulaPlanFromTargetShard");
     expect(parentLoader).toContain("loadParentShard(");

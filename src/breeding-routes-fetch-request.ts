@@ -8,6 +8,7 @@ export const PALWORLD_PARENT_BREEDING_OUTCOMES_PATH =
 export interface PalworldBreedingRoutesFetchInput {
   apiBaseUrl: string;
   encoded: EncodedOwnedPalsUploadPayload;
+  mode?: "formula";
   targetSpecies: string;
   startingSpecies?: string | null;
   passiveIds?: readonly string[];
@@ -39,6 +40,7 @@ export function createPalworldBreedingRoutesFetchInput(
   url.searchParams.set("targetSpecies", targetSpecies);
   const startingSpecies = input.startingSpecies?.trim();
   if (startingSpecies) url.searchParams.set("sourceSpecies", startingSpecies);
+  if (input.mode === "formula") url.searchParams.set("mode", input.mode);
   for (const passiveId of input.passiveIds ?? []) {
     const trimmed = passiveId.trim();
     if (trimmed) url.searchParams.append("passive", trimmed);
