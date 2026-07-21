@@ -5268,6 +5268,8 @@ export default function PalworldBreedingCalculatorPage({
                     data-testid="target-query-tab"
                     value="target"
                     disabled={calculatorControlsLocked}
+                    cursor="pointer"
+                    _disabled={{ cursor: "not-allowed" }}
                     minW={0}
                     minH={14}
                     px={{ base: 2, md: 4 }}
@@ -5329,6 +5331,8 @@ export default function PalworldBreedingCalculatorPage({
                     data-testid="parent-query-tab"
                     value="parents"
                     disabled={calculatorControlsLocked}
+                    cursor="pointer"
+                    _disabled={{ cursor: "not-allowed" }}
                     minW={0}
                     minH={14}
                     px={{ base: 2, md: 4 }}

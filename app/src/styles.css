@@ -342,6 +342,7 @@ textarea {
   width: 100%;
   max-width: 32rem;
   min-width: 0;
+  margin-inline: auto;
   padding: 4px;
   border: 1px solid var(--palworld-canvas-border);
   border-radius: 10px;

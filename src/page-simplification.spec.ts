@@ -916,6 +916,20 @@ describe("standalone calculator page simplification", () => {
       queryTabsMarker,
       source.indexOf("</Tabs.List>", queryTabsMarker) + "</Tabs.List>".length,
     );
+    const targetQueryTabMarker = queryTabs.indexOf(
+      'data-testid="target-query-tab"',
+    );
+    const targetQueryTab = queryTabs.slice(
+      targetQueryTabMarker,
+      queryTabs.indexOf("</Tabs.Trigger>", targetQueryTabMarker),
+    );
+    const parentQueryTabMarker = queryTabs.indexOf(
+      'data-testid="parent-query-tab"',
+    );
+    const parentQueryTab = queryTabs.slice(
+      parentQueryTabMarker,
+      queryTabs.indexOf("</Tabs.Trigger>", parentQueryTabMarker),
+    );
 
     expect(queryTabs).toContain('w="full"');
     expect(queryTabs).toContain('maxW="2xl"');
@@ -949,6 +963,11 @@ describe("standalone calculator page simplification", () => {
     ).toHaveLength(2);
     expect(styles).toContain("--palworld-query-tab-hover-bg:");
     expect(styles).toContain("--palworld-query-tab-hover-border:");
+    for (const queryTab of [targetQueryTab, parentQueryTab]) {
+      expect(queryTab).toContain("disabled={calculatorControlsLocked}");
+      expect(queryTab).toContain('cursor="pointer"');
+      expect(queryTab).toContain('_disabled={{ cursor: "not-allowed" }}');
+    }
   });
 
   it("shows every general formula without nested disclosure controls", () => {
@@ -1660,11 +1679,14 @@ describe("standalone calculator page simplification", () => {
     expect(resultsSearchToolbarSource).toContain("inputRef.current?.focus()");
     const toolbarStyles = styles.slice(
       styles.indexOf(".palworld-results-search-toolbar {"),
-      styles.indexOf(".palworld-shell-fallback {"),
+      styles.indexOf(
+        ".palworld-results-search-toolbar input::-webkit-search-cancel-button",
+      ),
     );
     expect(toolbarStyles).toContain("position: sticky;");
     expect(toolbarStyles).not.toContain("position: fixed;");
     expect(toolbarStyles).toContain("max-width: 32rem;");
+    expect(toolbarStyles).toContain("margin-inline: auto;");
     expect(toolbarStyles).toContain("padding: 4px;");
     expect(toolbarStyles).toContain("background: var(--palworld-canvas);");
     expect(toolbarStyles).toContain(
@@ -1673,7 +1695,7 @@ describe("standalone calculator page simplification", () => {
     expect(toolbarStyles).toContain(
       "box-shadow: var(--palworld-floating-shadow);",
     );
-    expect(toolbarStyles).toContain("::-webkit-search-cancel-button");
+    expect(styles).toContain("::-webkit-search-cancel-button");
   });
 
   it("lays out compact formula results in responsive one-to-three-column grids", () => {
