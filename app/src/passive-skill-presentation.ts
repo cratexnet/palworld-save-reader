@@ -22,6 +22,18 @@ const PASSIVE_SKILL_BACKGROUND_ASSETS = [
   "passive-rank-5-normal.webp",
 ] as const;
 
+function normalizePassiveSkillSearchText(value: string) {
+  return value.normalize("NFKC").trim().toLocaleLowerCase();
+}
+
+export function matchesPassiveSkillSearch(searchText: string, query: string) {
+  const normalizedSearchText = normalizePassiveSkillSearchText(searchText);
+  return normalizePassiveSkillSearchText(query)
+    .split(/\s+/u)
+    .filter(Boolean)
+    .every((token) => normalizedSearchText.includes(token));
+}
+
 export function createPassiveSkillEffectExcerpt(
   description: string | undefined,
   query: string,
@@ -30,21 +42,30 @@ export function createPassiveSkillEffectExcerpt(
     .split(/\r?\n/u)
     .map((line) => line.trim())
     .filter(Boolean);
-  const normalizedQuery = query.trim().toLocaleLowerCase();
-  const matchingIndex = normalizedQuery
-    ? lines.findIndex((line) =>
-        line.toLocaleLowerCase().includes(normalizedQuery),
-      )
-    : -1;
+  const queryTokens = normalizePassiveSkillSearchText(query)
+    .split(/\s+/u)
+    .filter(Boolean);
+  const orderedLines =
+    queryTokens.length > 0
+      ? lines
+          .map((line, index) => {
+            const normalizedLine = normalizePassiveSkillSearchText(line);
+            return {
+              line,
+              index,
+              matchCount: queryTokens.filter((token) =>
+                normalizedLine.includes(token),
+              ).length,
+            };
+          })
+          .sort(
+            (left, right) =>
+              right.matchCount - left.matchCount || left.index - right.index,
+          )
+          .map(({ line }) => line)
+      : lines;
 
-  if (matchingIndex <= 0) return lines.slice(0, 2).join("\n");
-  return [
-    lines[matchingIndex],
-    ...lines.slice(0, matchingIndex),
-    ...lines.slice(matchingIndex + 1),
-  ]
-    .slice(0, 2)
-    .join("\n");
+  return orderedLines.slice(0, 2).join("\n");
 }
 
 export function resolvePassiveSkillGroup(rank: number): PassiveSkillGroup {

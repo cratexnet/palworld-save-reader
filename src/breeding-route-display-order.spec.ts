@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { orderBreedingStepParentsForDisplay } from "../app/src/breeding-route-display-order";
+import {
+  orderBreedingStepParentsForDisplay,
+  selectRecommendedRoutesForDisplay,
+} from "../app/src/breeding-route-display-order";
 import type {
   PalworldBreedingRouteParent,
   PalworldBreedingStep,
@@ -46,5 +49,24 @@ describe("breeding route display order", () => {
 
     expect(firstParent.species).toBe("GrassMammoth");
     expect(secondParent.species).toBe("SheepBall");
+  });
+
+  it("keeps only the first inventory recommendation", () => {
+    const routes = ["first", "recommended", "alternate"];
+    const recommendedIndexes = [1, 2];
+
+    expect(
+      selectRecommendedRoutesForDisplay(
+        "inventory",
+        routes,
+        recommendedIndexes,
+      ),
+    ).toEqual(["recommended"]);
+    expect(
+      selectRecommendedRoutesForDisplay("formula", routes, recommendedIndexes),
+    ).toEqual([]);
+    expect(selectRecommendedRoutesForDisplay("inventory", routes, [9])).toEqual(
+      [],
+    );
   });
 });

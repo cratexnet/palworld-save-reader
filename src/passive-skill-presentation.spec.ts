@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   createPassiveSkillEffectExcerpt,
+  matchesPassiveSkillSearch,
   resolvePassiveSkillGroup,
   resolvePassiveSkillPresentation,
 } from "../app/src/passive-skill-presentation";
@@ -17,6 +18,19 @@ describe("passive skill presentation", () => {
     expect(createPassiveSkillEffectExcerpt(description, "rare")).toBe(
       "Attack +15%\nDefense +15%",
     );
+
+    expect(createPassiveSkillEffectExcerpt(description, "defense work")).toBe(
+      "Defense +15%\nWork speed +20%",
+    );
+  });
+
+  it("matches normalized description tokens in any spacing", () => {
+    const searchText = "Attack +15%\nWork speed +20%\nＷｏｒｋ speed +75％";
+
+    expect(matchesPassiveSkillSearch(searchText, "work 20%")).toBe(true);
+    expect(matchesPassiveSkillSearch(searchText, "ＷＯＲＫ 75％")).toBe(true);
+    expect(matchesPassiveSkillSearch(searchText, "work 99%")).toBe(false);
+    expect(matchesPassiveSkillSearch(searchText, "   ")).toBe(true);
   });
 
   it("maps every supported rank to its runtime-captured normal surface", () => {

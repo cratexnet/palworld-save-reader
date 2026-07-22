@@ -3,6 +3,20 @@ import type {
   PalworldBreedingStep,
 } from "../../src/breeding-routes-api-contract";
 
+export function selectRecommendedRoutesForDisplay<T>(
+  mode: "formula" | "inventory" | null | undefined,
+  routes: readonly T[] | null | undefined,
+  recommendedIndexes: readonly number[] | null | undefined,
+): T[] {
+  if (mode !== "inventory") return [];
+
+  const recommendedIndex = recommendedIndexes?.[0];
+  if (recommendedIndex === undefined) return [];
+
+  const recommendedRoute = routes?.[recommendedIndex];
+  return recommendedRoute === undefined ? [] : [recommendedRoute];
+}
+
 export function orderBreedingStepParentsForDisplay(
   step: PalworldBreedingStep,
   preferredParentSpecies: string | null | undefined,

@@ -75,7 +75,10 @@ import {
   normalizeResultsSearchText,
   type ResultsSearchEntry,
 } from "./results-search";
-import { orderBreedingStepParentsForDisplay } from "./breeding-route-display-order";
+import {
+  orderBreedingStepParentsForDisplay,
+  selectRecommendedRoutesForDisplay,
+} from "./breeding-route-display-order";
 import { resolveBreedingSearchResultVisibility } from "./breeding-search-result-visibility";
 import type { Locale } from "./i18n";
 import {
@@ -101,6 +104,7 @@ import {
 } from "./calculator-share-state";
 import {
   createPassiveSkillEffectExcerpt,
+  matchesPassiveSkillSearch,
   resolvePassiveSkillGroup,
   resolvePassiveSkillPresentation,
   type PassiveSkillPresentation,
@@ -1304,7 +1308,7 @@ function PassiveSkillPickerDialog({
   const filteredOptions = useMemo(() => {
     if (!normalizedQuery) return options;
     return options.filter((option) =>
-      option.searchText.includes(normalizedQuery),
+      matchesPassiveSkillSearch(option.searchText, normalizedQuery),
     );
   }, [normalizedQuery, options]);
   const optionGroups = groupPassiveOptionsByTier(filteredOptions);
@@ -1324,6 +1328,24 @@ function PassiveSkillPickerDialog({
     const effectExcerpt = createPassiveSkillEffectExcerpt(
       option.description,
       normalizedQuery,
+    );
+    const descriptionContent = (
+      <Text
+        as="span"
+        className="palworld-passive-choice__description"
+        display="block"
+        h="2.7em"
+        mt={0.5}
+        px={1}
+        color="var(--palworld-fg-soft)"
+        fontSize="xs"
+        lineHeight="1.35"
+        lineClamp={2}
+        whiteSpace="pre-line"
+        aria-hidden={option.description ? undefined : true}
+      >
+        {effectExcerpt || "\u00a0"}
+      </Text>
     );
 
     return (
@@ -1395,24 +1417,13 @@ function PassiveSkillPickerDialog({
               />
             ) : null}
           </Box>
-          {normalizedQuery && option.description ? (
+          {option.description ? (
             <AppTooltip content={option.description}>
-              <Text
-                as="span"
-                className="palworld-passive-choice__description"
-                display="block"
-                px={1}
-                pt={0.5}
-                color="var(--palworld-fg-soft)"
-                fontSize="xs"
-                lineHeight="1.35"
-                lineClamp={2}
-                whiteSpace="pre-line"
-              >
-                {effectExcerpt}
-              </Text>
+              {descriptionContent}
             </AppTooltip>
-          ) : null}
+          ) : (
+            descriptionContent
+          )}
         </Box>
         {ownership === "owned" ? (
           <AppTooltip content={ownershipLabel}>
@@ -4128,12 +4139,13 @@ export default function PalworldBreedingCalculatorPage({
   const recommendedRouteKeys = useMemo(
     () =>
       new Set(
-        (plan?.recommendedRouteIndexes ?? []).slice(0, 1).flatMap((index) => {
-          const route = plan?.routes[index];
-          return route ? [createPalworldRouteExecutionSignature(route)] : [];
-        }),
+        selectRecommendedRoutesForDisplay(
+          plan?.mode,
+          plan?.routes,
+          plan?.recommendedRouteIndexes,
+        ).map(createPalworldRouteExecutionSignature),
       ),
-    [plan?.recommendedRouteIndexes, plan?.routes],
+    [plan?.mode, plan?.recommendedRouteIndexes, plan?.routes],
   );
   const allRoutes = useMemo(() => {
     const seen = new Set<string>();

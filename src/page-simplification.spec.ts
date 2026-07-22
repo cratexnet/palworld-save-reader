@@ -94,44 +94,21 @@ describe("standalone calculator page simplification", () => {
     expect(source).not.toContain('t("routes.formula_mode_title")');
   });
 
-  it("explains the metrics behind the recommended formula route", () => {
-    const recommendationReason = source.slice(
-      source.indexOf("function FormulaRouteRecommendationReason("),
-      source.indexOf("function FormulaRouteCard("),
-    );
-    const compactFormulaRow = source.slice(
-      source.indexOf("function CompactFormulaRouteRow("),
-      source.indexOf("function ParentBreedingResults("),
-    );
-    const routeCollection = source.slice(
-      source.indexOf("function RouteCollection("),
-      source.indexOf("function InventoryRouteBrowser("),
-    );
+  it("uses the shared inventory-only recommendation policy for route display", () => {
     const recommendedKeySetup = source.slice(
       source.indexOf("const recommendedRouteKeys"),
       source.indexOf("const allRoutes"),
     );
+    const allRouteSetup = source.slice(
+      source.indexOf("const allRoutes"),
+      source.indexOf("const totalRouteCount"),
+    );
 
-    expect(recommendationReason).toContain("route.acquisitionDifficulty");
-    expect(recommendationReason).toContain('t("routes.step_count"');
-    expect(recommendationReason).toContain(
-      't("routes.no_special_source_parents")',
+    expect(recommendedKeySetup).toContain("selectRecommendedRoutesForDisplay(");
+    expect(recommendedKeySetup).toContain(
+      ".map(createPalworldRouteExecutionSignature)",
     );
-    expect(recommendationReason).toContain(
-      't("routes.special_source_parent_count"',
-    );
-    expect(recommendationReason).toContain(
-      't("routes.highest_required_wild_level"',
-    );
-    expect(recommendationReason).toContain(
-      'data-testid="route-recommendation-reason"',
-    );
-    expect(compactFormulaRow).toContain('t("routes.recommended")');
-    expect(compactFormulaRow).toContain(
-      "<FormulaRouteRecommendationReason route={route} />",
-    );
-    expect(routeCollection).toContain("recommended={recommendedRouteKeys.has(");
-    expect(recommendedKeySetup).toContain(".slice(0, 1)");
+    expect(allRouteSetup).toContain("recommendedRouteKeys.has(");
   });
 
   it("uses plus and equals operators in every breeding equation", () => {
@@ -564,9 +541,8 @@ describe("standalone calculator page simplification", () => {
       source.indexOf("function ParentBreedingResults("),
     );
 
-    expect(source).toContain(
-      'import { orderBreedingStepParentsForDisplay } from "./breeding-route-display-order";',
-    );
+    expect(source).toContain("orderBreedingStepParentsForDisplay,");
+    expect(source).toContain('from "./breeding-route-display-order";');
     expect(routeCollection).toContain("startingSpecies: string | null;");
     expect(routeCollection).toContain("startingSpecies={startingSpecies}");
     expect(compactFormulaRow).toContain("orderBreedingStepParentsForDisplay(");
@@ -1365,10 +1341,13 @@ describe("standalone calculator page simplification", () => {
     expect(passivePicker).toContain("onClick={() => onToggle(option.value)}");
     expect(passivePicker).toContain("safePassiveLabel(option.value, locale)");
     expect(source).toContain("option.description,");
-    expect(passivePicker).toContain("normalizedQuery && option.description");
+    expect(passivePicker).toContain("const descriptionContent = (");
+    expect(passivePicker).toContain("{option.description ? (");
     expect(passivePicker).toContain(
       'className="palworld-passive-choice__description"',
     );
+    expect(passivePicker).toContain('h="2.7em"');
+    expect(passivePicker).not.toContain('minH="2.7em"');
     expect(passivePicker).toContain("aria-pressed={selected}");
     expect(passivePicker).not.toContain('role="listbox"');
     expect(passivePicker).not.toContain('role="option"');
