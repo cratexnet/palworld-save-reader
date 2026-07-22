@@ -171,6 +171,9 @@
   },
   "routes": {
     "recommended": "Recommended",
+    "no_special_source_parents": "No special-source parents",
+    "special_source_parent_count": "Special-source parents: {count}",
+    "highest_required_wild_level": "Highest required wild level: {level}",
     "closest": "Closest match",
     "ready_now": "Ready now",
     "parents_owned_status": "Owned · Ready now",

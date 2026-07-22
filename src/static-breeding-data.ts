@@ -141,7 +141,7 @@ export function createFormulaPlanFromTargetShard(
     desiredPassiveAcquisitions: [],
     inventoryCount: 0,
     routes,
-    recommendedRouteIndexes: routeIndexes.slice(0, 3),
+    recommendedRouteIndexes: routeIndexes.slice(0, 1),
     directRouteIndexes: routeIndexes,
     routesByDepth: { depth1: routeIndexes, depth2: [], depth3: [] },
     routesByGroup: {

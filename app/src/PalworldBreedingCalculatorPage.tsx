@@ -75,6 +75,7 @@ import {
   normalizeResultsSearchText,
   type ResultsSearchEntry,
 } from "./results-search";
+import { orderBreedingStepParentsForDisplay } from "./breeding-route-display-order";
 import { resolveBreedingSearchResultVisibility } from "./breeding-search-result-visibility";
 import type { Locale } from "./i18n";
 import {
@@ -2699,6 +2700,46 @@ function BreedingEquationOperator({ operator }: { operator: "+" | "=" }) {
   );
 }
 
+function FormulaRouteRecommendationReason({
+  route,
+}: {
+  route: PalworldBreedingRoute;
+}) {
+  const t = useTranslations("palworld-breeding-calculator");
+  const acquisition = route.acquisitionDifficulty;
+  if (!acquisition) return null;
+
+  const reasons = [
+    t("routes.step_count", { count: route.steps.length }),
+    acquisition.specialParentCount === 0
+      ? t("routes.no_special_source_parents")
+      : t("routes.special_source_parent_count", {
+          count: acquisition.specialParentCount,
+        }),
+  ];
+  if (acquisition.highestMinimumWildLevel > 0) {
+    reasons.push(
+      t("routes.highest_required_wild_level", {
+        level: acquisition.highestMinimumWildLevel,
+      }),
+    );
+  }
+
+  return (
+    <Text
+      data-testid="route-recommendation-reason"
+      minW={0}
+      flex="1 1 14rem"
+      color="var(--palworld-fg-muted)"
+      fontSize="xs"
+      fontWeight="medium"
+      lineHeight="1.6"
+    >
+      {reasons.join(" · ")}
+    </Text>
+  );
+}
+
 function FormulaRouteCard({
   route,
   locale,
@@ -2753,6 +2794,9 @@ function FormulaRouteCard({
               />
             ))}
           </HStack>
+        ) : null}
+        {recommended ? (
+          <FormulaRouteRecommendationReason route={route} />
         ) : null}
 
         <Stack gap={2}>
@@ -2970,6 +3014,7 @@ function RouteCollection({
   locale,
   mode,
   desiredPassiveIds,
+  startingSpecies,
   query,
   searchMeta,
   recommendedRouteKeys,
@@ -2978,6 +3023,7 @@ function RouteCollection({
   locale: string;
   mode: CalculationMode;
   desiredPassiveIds: readonly string[];
+  startingSpecies: string | null;
   query: string;
   searchMeta: PalworldBreedingRoutesResponse["searchMeta"];
   recommendedRouteKeys: ReadonlySet<string>;
@@ -3021,6 +3067,10 @@ function RouteCollection({
               key={createPalworldFormulaRouteSignature(route)}
               route={route}
               locale={locale}
+              startingSpecies={startingSpecies}
+              recommended={recommendedRouteKeys.has(
+                createPalworldRouteExecutionSignature(route),
+              )}
             />
           ))}
         </div>
@@ -3600,42 +3650,68 @@ function filterBreedingRoutesBySearch(
 function CompactFormulaRouteRow({
   route,
   locale,
+  startingSpecies,
+  recommended,
 }: {
   route: PalworldBreedingRoute;
   locale: string;
+  startingSpecies: string | null;
+  recommended: boolean;
 }) {
+  const t = useTranslations("palworld-breeding-calculator");
   return (
-    <div className="palworld-compact-formula-route">
-      {route.steps.map((step, index) => (
-        <div
-          key={`${createPalworldFormulaRouteSignature(route)}-formula-${index}`}
-          className="palworld-compact-formula-step"
-        >
-          <CompactFormulaPal
-            internalId={step.parent1.species}
-            locale={locale}
-            position="parent1"
-            requiredGender={step.parent1.requiredGender}
-          />
-          <span className="palworld-compact-formula-operator palworld-compact-formula-operator--plus">
-            +
-          </span>
-          <CompactFormulaPal
-            internalId={step.parent2.species}
-            locale={locale}
-            position="parent2"
-            requiredGender={step.parent2.requiredGender}
-          />
-          <span className="palworld-compact-formula-operator palworld-compact-formula-operator--equals">
-            =
-          </span>
-          <CompactFormulaPal
-            internalId={step.child}
-            locale={locale}
-            position="child"
-          />
-        </div>
-      ))}
+    <div
+      className={`palworld-compact-formula-route${recommended ? " palworld-compact-formula-route--recommended" : ""}`}
+    >
+      {recommended ? (
+        <HStack gap={2} mb={2} align="start" flexWrap="wrap">
+          <Badge
+            flex="0 0 auto"
+            bg="var(--palworld-recommended-solid)"
+            color="var(--palworld-accent-contrast)"
+          >
+            {t("routes.recommended")}
+          </Badge>
+          <FormulaRouteRecommendationReason route={route} />
+        </HStack>
+      ) : null}
+      {route.steps.map((step, index) => {
+        const [firstParent, secondParent] = orderBreedingStepParentsForDisplay(
+          step,
+          index === 0 ? startingSpecies : null,
+        );
+
+        return (
+          <div
+            key={`${createPalworldFormulaRouteSignature(route)}-formula-${index}`}
+            className="palworld-compact-formula-step"
+          >
+            <CompactFormulaPal
+              internalId={firstParent.species}
+              locale={locale}
+              position="parent1"
+              requiredGender={firstParent.requiredGender}
+            />
+            <span className="palworld-compact-formula-operator palworld-compact-formula-operator--plus">
+              +
+            </span>
+            <CompactFormulaPal
+              internalId={secondParent.species}
+              locale={locale}
+              position="parent2"
+              requiredGender={secondParent.requiredGender}
+            />
+            <span className="palworld-compact-formula-operator palworld-compact-formula-operator--equals">
+              =
+            </span>
+            <CompactFormulaPal
+              internalId={step.child}
+              locale={locale}
+              position="child"
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -4052,7 +4128,7 @@ export default function PalworldBreedingCalculatorPage({
   const recommendedRouteKeys = useMemo(
     () =>
       new Set(
-        (plan?.recommendedRouteIndexes ?? []).flatMap((index) => {
+        (plan?.recommendedRouteIndexes ?? []).slice(0, 1).flatMap((index) => {
           const route = plan?.routes[index];
           return route ? [createPalworldRouteExecutionSignature(route)] : [];
         }),
@@ -6067,6 +6143,7 @@ export default function PalworldBreedingCalculatorPage({
                           locale={locale}
                           mode={plan.mode}
                           desiredPassiveIds={plan.desiredPassiveIds}
+                          startingSpecies={plan.startingSpecies}
                           query={targetRouteQuery}
                           searchMeta={plan.searchMeta}
                           recommendedRouteKeys={recommendedRouteKeys}

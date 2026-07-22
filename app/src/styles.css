@@ -760,6 +760,12 @@ textarea {
   contain-intrinsic-size: auto 88px;
 }
 
+.palworld-compact-formula-route--recommended {
+  border-color: var(--palworld-recommended-border);
+  background: var(--palworld-recommended-bg);
+  box-shadow: var(--palworld-recommended-shadow);
+}
+
 .palworld-compact-formula-step {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 0.75rem minmax(0, 1fr) 0.75rem minmax(

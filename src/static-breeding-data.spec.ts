@@ -241,6 +241,7 @@ describe("Palworld breeding static-data client", () => {
 
     expect(plan.routes).toHaveLength(60);
     expect(plan.directRouteIndexes).toHaveLength(60);
+    expect(plan.recommendedRouteIndexes).toEqual([0]);
     expect(plan.searchMeta).toMatchObject({
       returnedRouteCount: 60,
       routeLimit: 60,

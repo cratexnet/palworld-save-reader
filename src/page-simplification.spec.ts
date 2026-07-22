@@ -94,6 +94,46 @@ describe("standalone calculator page simplification", () => {
     expect(source).not.toContain('t("routes.formula_mode_title")');
   });
 
+  it("explains the metrics behind the recommended formula route", () => {
+    const recommendationReason = source.slice(
+      source.indexOf("function FormulaRouteRecommendationReason("),
+      source.indexOf("function FormulaRouteCard("),
+    );
+    const compactFormulaRow = source.slice(
+      source.indexOf("function CompactFormulaRouteRow("),
+      source.indexOf("function ParentBreedingResults("),
+    );
+    const routeCollection = source.slice(
+      source.indexOf("function RouteCollection("),
+      source.indexOf("function InventoryRouteBrowser("),
+    );
+    const recommendedKeySetup = source.slice(
+      source.indexOf("const recommendedRouteKeys"),
+      source.indexOf("const allRoutes"),
+    );
+
+    expect(recommendationReason).toContain("route.acquisitionDifficulty");
+    expect(recommendationReason).toContain('t("routes.step_count"');
+    expect(recommendationReason).toContain(
+      't("routes.no_special_source_parents")',
+    );
+    expect(recommendationReason).toContain(
+      't("routes.special_source_parent_count"',
+    );
+    expect(recommendationReason).toContain(
+      't("routes.highest_required_wild_level"',
+    );
+    expect(recommendationReason).toContain(
+      'data-testid="route-recommendation-reason"',
+    );
+    expect(compactFormulaRow).toContain('t("routes.recommended")');
+    expect(compactFormulaRow).toContain(
+      "<FormulaRouteRecommendationReason route={route} />",
+    );
+    expect(routeCollection).toContain("recommended={recommendedRouteKeys.has(");
+    expect(recommendedKeySetup).toContain(".slice(0, 1)");
+  });
+
   it("uses plus and equals operators in every breeding equation", () => {
     const formulaRouteCard = source.slice(
       source.indexOf("function FormulaRouteCard("),
@@ -479,7 +519,7 @@ describe("standalone calculator page simplification", () => {
     ) as Record<string, unknown>;
     const leafKeys = flattenMessageKeys(messages);
 
-    expect(leafKeys).toHaveLength(185);
+    expect(leafKeys).toHaveLength(188);
     expect(leafKeys).toContain("upload.reread_action");
     expect(leafKeys).not.toContain("results.show_more_routes");
     expect(leafKeys).toContain("results.priority_routes");
@@ -492,6 +532,9 @@ describe("standalone calculator page simplification", () => {
     expect(leafKeys).toContain("routes.sources_with_alternatives");
     expect(leafKeys).toContain("routes.alternatives_limited");
     expect(leafKeys).toContain("routes.location_palbox_position");
+    expect(leafKeys).toContain("routes.no_special_source_parents");
+    expect(leafKeys).toContain("routes.special_source_parent_count");
+    expect(leafKeys).toContain("routes.highest_required_wild_level");
     expect(leafKeys).not.toContain("hero.eyebrow");
     expect(leafKeys).not.toContain("status.initial");
     expect(leafKeys).not.toContain("stats.gzip");
@@ -509,6 +552,26 @@ describe("standalone calculator page simplification", () => {
     expect(source).toContain('t("results.formula_starting_parent"');
     expect(source).toContain("!palOwnedCounts.has(startingSpecies)");
     expect(source).toContain('t("results.starting_parent_not_owned"');
+  });
+
+  it("shows the selected starting species before its first route partner", () => {
+    const routeCollection = source.slice(
+      source.indexOf("function RouteCollection("),
+      source.indexOf("function InventoryRouteBrowser("),
+    );
+    const compactFormulaRow = source.slice(
+      source.indexOf("function CompactFormulaRouteRow("),
+      source.indexOf("function ParentBreedingResults("),
+    );
+
+    expect(source).toContain(
+      'import { orderBreedingStepParentsForDisplay } from "./breeding-route-display-order";',
+    );
+    expect(routeCollection).toContain("startingSpecies: string | null;");
+    expect(routeCollection).toContain("startingSpecies={startingSpecies}");
+    expect(compactFormulaRow).toContain("orderBreedingStepParentsForDisplay(");
+    expect(compactFormulaRow).toContain("index === 0 ? startingSpecies : null");
+    expect(source).toContain("startingSpecies={plan.startingSpecies}");
   });
 
   it("uses a lookup icon for the primary breeding query action", () => {
@@ -1507,8 +1570,8 @@ describe("standalone calculator page simplification", () => {
     expect(genderMarker).toContain('size="sm"');
     expect(formulaPal).toContain("<GenderMarker gender={requiredGender} />");
     expect(styles).not.toContain(".palworld-compact-formula-gender");
-    expect(source).toContain("requiredGender={step.parent1.requiredGender}");
-    expect(source).toContain("requiredGender={step.parent2.requiredGender}");
+    expect(source).toContain("requiredGender={firstParent.requiredGender}");
+    expect(source).toContain("requiredGender={secondParent.requiredGender}");
     expect(source).toContain("requiredGender={outcome.parentRequiredGender}");
     expect(source).toContain("requiredGender={outcome.partnerRequiredGender}");
     expect(routeParent).toContain("gender={source?.gender}");
