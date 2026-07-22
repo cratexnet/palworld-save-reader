@@ -4630,7 +4630,7 @@ export default function PalworldBreedingCalculatorPage({
       >
         <HStack className="palworld-floating-header__inner">
           <Box asChild className="palworld-floating-header__brand">
-            <Link href={buildCrateXGamesCategoryHref(locale)} target="_top">
+            <Link href={buildCrateXGamesCategoryHref()} target="_top">
               <img
                 src={cratexLogo32Href}
                 srcSet={`${cratexLogo32Href} 1x, ${cratexLogo64Href} 2x`}

@@ -11,6 +11,7 @@ import {
 } from "./i18n";
 import {
   buildPalworldBreedingCalculatorStandaloneHref,
+  persistPalworldBreedingCalculatorLocalePreference,
   shouldManagePalworldCalculatorDocumentMetadata,
 } from "./runtime";
 import { AppToaster } from "./ui";
@@ -44,6 +45,7 @@ export default function App({
 
   function handleLocaleChange(nextLocale: Locale) {
     if (nextLocale === locale) return;
+    persistPalworldBreedingCalculatorLocalePreference(nextLocale);
     window.location.assign(
       buildPalworldBreedingCalculatorStandaloneHref(
         nextLocale,

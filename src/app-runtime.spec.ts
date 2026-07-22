@@ -4,6 +4,10 @@ import { describe, expect, it } from "vitest";
 import {
   buildCrateXGamesCategoryHref,
   buildPalworldBreedingCalculatorStandaloneHref,
+  isPalworldBreedingCalculatorAutomaticLocaleEntry,
+  PALWORLD_BREEDING_CALCULATOR_LOCALE_COOKIE_NAME,
+  persistPalworldBreedingCalculatorLocalePreference,
+  resolvePalworldBreedingCalculatorLocalStoragePreference,
   resolveBreedingRoutesApiBaseUrlFromLocation,
   shouldManagePalworldCalculatorDocumentMetadata,
 } from "../app/src/runtime";
@@ -86,10 +90,121 @@ describe("standalone app runtime", () => {
     ).toBe("http://127.0.0.1:5173");
   });
 
-  it("links each game locale back to the corresponding CrateX.app games category", () => {
-    expect(buildCrateXGamesCategoryHref("zh-CN")).toBe("/zh-CN/cat/games");
-    expect(buildCrateXGamesCategoryHref("pt-BR")).toBe("/pt/cat/games");
-    expect(buildCrateXGamesCategoryHref("es-MX")).toBe("/es/cat/games");
+  it("returns to the main site through its own locale preference", () => {
+    expect(buildCrateXGamesCategoryHref()).toBe("/cat/games");
+  });
+
+  it("persists a standalone locale without changing the main-site locale", () => {
+    const cookies: string[] = [];
+    const storage: Array<[string, string]> = [];
+
+    persistPalworldBreedingCalculatorLocalePreference("de", {
+      hostname: "preview.cratex.app",
+      writeCookie: (value) => cookies.push(value),
+      writeLocalStorage: (key, value) => storage.push([key, value]),
+    });
+
+    expect(PALWORLD_BREEDING_CALCULATOR_LOCALE_COOKIE_NAME).toBe(
+      "cratex-palworld-breeding-locale",
+    );
+    expect(cookies).toEqual([
+      "cratex-palworld-breeding-locale=de; max-age=31536000; path=/; SameSite=lax; domain=.cratex.app",
+      "cratex-palworld-breeding-locale=; max-age=0; path=/; SameSite=lax",
+    ]);
+    expect(storage).toEqual([]);
+  });
+
+  it("falls back to standalone local storage when cookies are unavailable", () => {
+    const storage: Array<[string, string]> = [];
+
+    persistPalworldBreedingCalculatorLocalePreference("ja", {
+      hostname: "cratex.app",
+      writeCookie: () => {
+        throw new Error("cookie unavailable");
+      },
+      writeLocalStorage: (key, value) => storage.push([key, value]),
+    });
+
+    expect(storage).toEqual([["cratex-palworld-breeding-locale", "ja"]]);
+  });
+
+  it("falls back when the browser silently rejects cookie assignment", () => {
+    const storage: Array<[string, string]> = [];
+
+    persistPalworldBreedingCalculatorLocalePreference("de", {
+      hostname: "cratex.app",
+      readCookie: () => "",
+      writeCookie: () => {},
+      writeLocalStorage: (key, value) => storage.push([key, value]),
+    });
+
+    expect(storage).toEqual([["cratex-palworld-breeding-locale", "de"]]);
+  });
+
+  it("verifies the persisted cookie value before clearing the fallback", () => {
+    const storage: Array<[string, string]> = [];
+
+    persistPalworldBreedingCalculatorLocalePreference("de", {
+      hostname: "cratex.app",
+      readCookie: () => "cratex-palworld-breeding-locale=fr",
+      writeCookie: () => {},
+      writeLocalStorage: (key, value) => storage.push([key, value]),
+    });
+
+    expect(storage).toEqual([["cratex-palworld-breeding-locale", "de"]]);
+    expect(
+      resolvePalworldBreedingCalculatorLocalStoragePreference({
+        pageLocale: "fr",
+        automaticLocaleEntry: true,
+        storedLocale: storage[0]?.[1],
+      }),
+    ).toBe("de");
+  });
+
+  it("restores local storage only for the automatic locale entry marker", () => {
+    expect(
+      isPalworldBreedingCalculatorAutomaticLocaleEntry(
+        "?lang=de&locale-source=auto",
+      ),
+    ).toBe(true);
+    expect(
+      isPalworldBreedingCalculatorAutomaticLocaleEntry(
+        "?lang=fr&utm_source=test",
+      ),
+    ).toBe(false);
+    expect(isPalworldBreedingCalculatorAutomaticLocaleEntry("?lang=fr")).toBe(
+      false,
+    );
+
+    expect(
+      resolvePalworldBreedingCalculatorLocalStoragePreference({
+        pageLocale: "fr",
+        automaticLocaleEntry: true,
+        storedLocale: "de",
+      }),
+    ).toBe("de");
+    expect(
+      resolvePalworldBreedingCalculatorLocalStoragePreference({
+        pageLocale: "fr",
+        automaticLocaleEntry: false,
+        storedLocale: "de",
+      }),
+    ).toBeNull();
+    expect(
+      resolvePalworldBreedingCalculatorLocalStoragePreference({
+        automaticLocaleEntry: true,
+        pageLocale: "fr",
+        storedLocale: "unsupported",
+      }),
+    ).toBeNull();
+
+    const mainSource = readFileSync(resolve("app/src/main.tsx"), "utf8");
+    expect(mainSource).toContain(
+      "resolvePalworldBreedingCalculatorLocalStoragePreference",
+    );
+    expect(mainSource).toContain("window.location.replace");
+    expect(mainSource).toContain("window.history.replaceState");
+    expect(mainSource).toContain("window.location.hash");
   });
 
   it("builds canonical lang-query URLs for language navigation", () => {
@@ -107,18 +222,29 @@ describe("standalone app runtime", () => {
     ).toBe("/games/palworld/breeding?lang=ja#v=1&view=target&child=Anubis");
   });
 
-  it("navigates language changes through canonical lang-query pages", () => {
+  it("persists language changes before navigating to canonical lang-query pages", () => {
     const appSource = readFileSync(resolve("app/src/App.tsx"), "utf8");
     const pageSource = readFileSync(
       resolve("app/src/PalworldBreedingCalculatorPage.tsx"),
       "utf8",
     );
+    const localeChangeHandler = appSource.slice(
+      appSource.indexOf("function handleLocaleChange"),
+      appSource.indexOf("\n  return ("),
+    );
 
-    expect(appSource).toContain(
+    expect(localeChangeHandler).toContain(
+      "persistPalworldBreedingCalculatorLocalePreference(nextLocale)",
+    );
+    expect(
+      localeChangeHandler.indexOf(
+        "persistPalworldBreedingCalculatorLocalePreference",
+      ),
+    ).toBeLessThan(localeChangeHandler.indexOf("window.location.assign"));
+    expect(localeChangeHandler).toContain(
       "buildPalworldBreedingCalculatorStandaloneHref(",
     );
-    expect(appSource).toContain("window.location.hash");
-    expect(appSource).toContain("window.location.assign");
+    expect(localeChangeHandler).toContain("window.location.hash");
     expect(appSource).toContain("onLocaleChange");
     expect(appSource).not.toContain("postMessage");
     expect(pageSource).not.toContain('.get("apiBaseUrl")');
